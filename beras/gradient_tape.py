@@ -37,6 +37,59 @@ class GradientTape:
         # Use id(tensor) to get the object id of a tensor object.
         # in the end, your grads dictionary should have the following structure:
         # {id(tensor): [gradient]}
+        
+        # print("Startg")
+        up_gradient = []  
+    
+        while queue:
+            o = queue.pop(0)
+            
+            if len(up_gradient) == 0:
+                J = None
+            else:
+                J = [up_gradient.pop(0)]
+                
+            l_layer = self.previous_layers[id(o)]
+            if l_layer is None:
+                continue
+                
+            weights_list = l_layer.weights # get w b
 
-        # What tensor and what gradient is for you to implement!
-        # compose_input_gradients and compose_weight_gradients are methods that will be helpful
+            if len(weights_list) != 0:
+                weights_gradient = l_layer.compose_weight_gradients(J)
+
+                for weight, weight_grad in zip(weights_list, weights_gradient):
+                   
+                    if grads[id(weight)] is None:
+                        grads[id(weight)] = weight_grad
+                    else:
+                        grads[id(weight)] = grads[id(weight)]+weight_grad
+                        
+            # print("Processing layer:", type(prev_layer))
+            inputs_list = l_layer.inputs
+            input_gradient = l_layer.compose_input_gradients(J)
+
+            # print(J)
+            
+            # print("Processing layer:", type(prev_layer))
+            # print("Input list:", [id(inp) for inp in inputs_list])
+            # print("Input gradients shapes:", [g.shape for g in input_gradients])
+           
+            queue.extend(inputs_list)
+            
+            for input, input_grad in zip(inputs_list, input_gradient):
+                if grads[id(input)] is None:
+                    grads[id(input)] = input_grad
+                else:
+                    grads[id(input)] = grads[id(input)]+input_grad
+            
+            up_gradient.extend(input_gradient)
+           
+            # print(" nnnnnnnext layer")
+        
+        result = [grads[id(source)] for source in sources]
+        
+        return result
+
+
+          

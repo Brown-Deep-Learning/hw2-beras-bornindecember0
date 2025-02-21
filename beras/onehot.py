@@ -23,10 +23,29 @@ class OneHotEncoder(Callable):
         :param data: 1D array containing labels.
             For example, data = [0, 1, 3, 3, 1, 9, ...]
         """
-        return NotImplementedError
+        
+        labels = np.unique(data)
+        i_matirx = np.eye(len(labels))
+        
+        self.one_hot_dict = {label: i_matirx[i] for i, label in enumerate(labels)}
+        
 
     def forward(self, data):
-        return NotImplementedError
+
+        if self.one_hot_dict is None:
+            self.fit(data)
+            
+        return np.array([self.one_hot_dict[label] for label in data])
+
 
     def inverse(self, data):
-        return NotImplementedError
+        # OneHotEncoder.inverse(OneHotEncoder.forward(data)) = data
+       
+        reverse_dict = {tuple(v): k for k, v in self.one_hot_dict.items()}
+        
+        return np.array([reverse_dict[tuple(vec)] for vec in data])
+
+       
+ 
+ 
+    

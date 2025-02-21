@@ -16,7 +16,7 @@ class Tensor(np.ndarray):
 
     def __new__(cls, input_array):
         # Create a new instance of the Tensor
-        obj = np.asarray(a=???).view(type=cls)
+        obj = np.asarray(a=input_array).view(type=cls)
         obj.trainable = True
         return obj
 
@@ -24,6 +24,9 @@ class Tensor(np.ndarray):
         if obj is None:
             return
         self.trainable = getattr(obj, "trainable", True)
+  
+    def assign(self, value: Union[Tensor, np.ndarray]):
+        self[:] = value
 
 
 """
@@ -71,22 +74,31 @@ class Weighted(ABC):
     @property
     def trainable_variables(self) -> list[Tensor]:
         """Collects all trainable variables in the module"""
-        return NotImplementedError
+
+        return [weight for weight in self.weights if weight.trainable]
 
     @property
     def non_trainable_variables(self) -> list[Tensor]:
         """Collects all non-trainable variables in the module"""
-        return NotImplementedError
+        
+        return [weight for weight in self.weights if not weight.trainable]
+       
+        
 
     @property
     def trainable(self) -> bool:
-        """Returns true if any of the weights are trainable"""
-        return NotImplementedError
+        """Returns true if any of the weights are trainable"""  
+        for weight in self.weights:
+            if weight.trainable:
+                return True
+        return False
 
     @trainable.setter
     def trainable(self, trainable: bool):
         """Sets the trainable status of all weights to trainable"""
-        pass 
+        for weight in self.weights:
+            weight.trainable = trainable
+       
 
 
 class Diffable(Callable, Weighted):
@@ -150,7 +162,7 @@ class Diffable(Callable, Weighted):
 
         ## Check if there is a gradient tape scope in effect
         if Diffable.gradient_tape is not None:
-            # Go through each output and add this layer to the previous layers dictionary
+            # Go through each output and add this layer to the previous layers dictionary 
             for out in self.outputs:
                 # id(<object>) returns the memory address of the object,
                 #   which is used as the key in the previous_layers dictionary
@@ -193,6 +205,7 @@ class Diffable(Callable, Weighted):
         # If J[0] is None, then we have no upstream gradients to compose with
         #  so we just return the input gradients
         # if J is None or J[0] is None:
+       
         if J is None or J[0] is None:
             return self.get_input_gradients()
         # J_out stores all input gradients to be tracked in backpropagation.
@@ -212,6 +225,7 @@ class Diffable(Callable, Weighted):
                 J_out += [j_wrt_lay_inp]
         # Returns cumulative jacobians w.r.t to all inputs.
         return J_out
+
 
     def compose_weight_gradients(self, J: Iterable = None) -> list[Tensor]:
         """
@@ -249,3 +263,4 @@ class Diffable(Callable, Weighted):
                 J_out += [np.sum(j_wrt_lay_w, axis=0)]
             ## After new jacobian is computed for each weight set, return the list of gradient updatates
         return J_out
+    
