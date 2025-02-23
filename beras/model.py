@@ -119,7 +119,7 @@ class Model(Diffable):
         metrics_dict = defaultdict(list)
         num_samples = x.shape[0]
         num_batches = num_samples // batch_size
-        
+        batch_prediction = []
         # per batch
         for batch in range(num_batches):
             start = batch * batch_size
@@ -131,15 +131,17 @@ class Model(Diffable):
 
              
             if isinstance(batch_result, tuple):
-                batch_metrics = batch_result[0]  # only the metrics 
+                batch_metrics, prediction= batch_result
+                batch_prediction.append(prediction) 
             else:
                 batch_metrics = batch_result
             update_metric_dict(metrics_dict, batch_metrics)
         
     
         print_stats(metrics_dict, avg=True)
-        # print('its me hi')
-        return metrics_dict
+        final_predictions = np.concatenate(batch_prediction, axis=0)
+        
+        return metrics_dict, final_predictions
         
 
     def get_input_gradients(self) -> list[Tensor]:

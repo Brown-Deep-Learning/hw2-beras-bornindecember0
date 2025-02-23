@@ -58,13 +58,17 @@ if __name__ == '__main__':
 
     # 4. Train the model
     epochs = 10
-    batch_size = 32
+    batch_size = 40
     train_m_dict = model.fit(ftrain_i, encoded_train_labels, epochs, batch_size)
     # 5. Evaluate the model
-    evaluate_m_dict = model.evaluate(ftest_i, encoded_test_labels, batch_size)
+    evaluate_m_dict, prediction = model.evaluate(ftest_i, encoded_test_labels, batch_size)
     # print('-------------------------------------------------------')
-    # print('current param: Adam(learning_rate=0.01) 784 200 / relu/ 200 10/ sm ')
+    # print('current param: Adam(learning_rate=0.001) 784 200 / relu/ 200 10/ sm ')
     # print('current param: epochs', epochs,'batch_size', batch_size)
+   
+    predicted_classes = np.argmax(prediction, axis=1)
+    np.save('predictions.npy', predicted_classes)
+   
     
                                                                                                     
     
